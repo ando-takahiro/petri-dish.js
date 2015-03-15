@@ -1,0 +1,21 @@
+{
+  "name": "petri-dish.js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.12.2",
+    "socket.io": "^1.3.5",
+    "socket.io-adapter": "^0.3.1",
+    "socket.io-browserify": "^0.9.6",
+    "socket.io-client": "^1.3.5"
+  },
+  "devDependencies": {
+    "node-dev": "^2.6.1"
+  }
+}
