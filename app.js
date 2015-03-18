@@ -16,8 +16,9 @@ var H = 100; // world height
 
 var curId = 0;
 var entities = {};
+var lastUpdateCount = 0;
+var updateCount = 0;
 io.on('connection', function(socket){
-    console.log('new connection');
     var e = {x: Math.random() * W, y: Math.random() * H, id: curId++};
     entities[e.id] = e;
     socket.on('move', function(x, y){
@@ -36,6 +37,13 @@ io.on('connection', function(socket){
 
 setInterval(function () {
     if (Object.keys(entities).length > 0) {
+        ++updateCount;
         io.sockets.emit('update', entities);
     }
 }, 100);
+
+setInterval(function () {
+    var diff = updateCount - lastUpdateCount;
+    var clients = Object.keys(entities).length;
+    console.log('con:', clients, diff, diff / clients);
+}, 1000);
