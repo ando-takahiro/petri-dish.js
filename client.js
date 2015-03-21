@@ -1,34 +1,44 @@
-var io = require('socket.io-client');
+var helper = require('./helper');
+var net = require('net');
+var sendBuffer = new Buffer(12);
+
+function randomStep() {
+    return 2 * (Math.random() - 0.5);
+}
+
 function main() {
-    var socket = io('http://127.0.0.1:3000/', {'force new connection': true});
-
-    socket.on('connect', function () {
-        // socket connected 
-        console.log('connected');
-    });
-
-    function randomStep() {
-        return 2 * (Math.random() - 0.5);
-    }
-
+    var socket = net.connect({host: '127.0.0.1', port: 3000});
     var me;
-    socket.on('ready', function (e) {
-        me = e;
+    var deserializer = helper.createDeserializer(function (buf, cur) {
+        // welcome message
+        var id = buf.readUInt32LE(cur + 0);
+        var x = buf.readFloatLE(cur + 4);
+        var y = buf.readFloatLE(cur + 8);
+        me = {id: id, x: x, y: y};
+
+        // normal messages
+        deserializer.fn = function (buf, cur) {
+            var id = buf.readUInt32LE(cur + 0);
+            if (id === me.id) {
+                var x = buf.readFloatLE(cur + 4);
+                var y = buf.readFloatLE(cur + 8);
+            
+                me.x = x;
+                me.y = y;
+            }
+        };
+
+        // send my status repeatedly
         setInterval(function () {
-            socket.emit('move', e.x + randomStep(), e.y + randomStep());
+            socket.write(helper.makeMessage(me.id, me.x + randomStep(), me.y + randomStep(), sendBuffer));
         }, 100);
+    }, 12);
+
+    socket.on('data', function (d) {
+        deserializer.append(d);
     });
 
-    socket.on('update', function (entities) {
-        // update me
-        if (me && me.id in entities) {
-            var m = entities[me.id];
-            me.x = m.x;
-            me.y = m.y;
-        }
-    });
-
-    socket.on('disconnect', function () {
+    socket.on('close', function () {
         // socket disconnected 
         console.log('disconnected');
     });
